@@ -33,12 +33,20 @@ export const LoginPage: React.FC = () => {
         if (error) throw error;
         alert('Check your email for the confirmation link!');
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password
         });
         if (error) throw error;
-        navigate('/dashboard');
+        
+        // Immediate redirection based on metadata role
+        const isAdmin = data.session?.user.user_metadata?.is_admin;
+        if (isAdmin) {
+          console.log("Admin Login Detected. Redirecting to Panel...");
+          navigate('/prio56');
+        } else {
+          navigate('/dashboard');
+        }
       }
     } catch (err: any) {
       setError(err.message);
