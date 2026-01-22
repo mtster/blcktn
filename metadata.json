@@ -1,0 +1,7 @@
+{
+  "name": "Copy of Blackton Carbon Auditing",
+  "description": "An ultra-premium carbon auditing platform for enterprises, leveraging Gemini AI to process utility bills and ensure compliance.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
