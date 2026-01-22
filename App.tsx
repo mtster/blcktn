@@ -37,14 +37,20 @@ const ClientLayout = () => {
 const MasterAdminLayout = () => {
   const { profile, loading, user } = useAuth();
   
-  if (loading) return <div className="min-h-screen bg-[#050505] flex items-center justify-center font-black tracking-widest text-white/10">VERIFYING_PRIVILEGES_...</div>;
-  
-  // If not logged in or NOT an admin, silent fail to home
-  if (!user || !profile?.is_admin) {
-    return <Navigate to="/" replace />;
+  console.log('Admin Access Check:', { is_admin: profile?.is_admin, path: window.location.pathname });
+
+  // Primary loading state
+  if (loading) {
+    return <div className="min-h-screen bg-[#050505] flex items-center justify-center font-black tracking-widest text-white/10">VERIFYING_PRIVILEGES_...</div>;
   }
 
-  return <Outlet />;
+  // After loading, if the user is confirmed to be an admin, allow access.
+  if (user && profile?.is_admin) {
+    return <Outlet />;
+  }
+
+  // In all other cases (not logged in, not admin, profile still loading), redirect.
+  return <Navigate to="/" replace />;
 };
 
 const App: React.FC = () => {
@@ -63,6 +69,11 @@ const App: React.FC = () => {
           <Navbar />
           <main>
             <Routes>
+              {/* Master Control Space (Obfuscated & Prioritized) */}
+              <Route element={<MasterAdminLayout />}>
+                <Route path="/prio56" element={<MasterAdminCabinet />} />
+              </Route>
+
               {/* Public Surface */}
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
@@ -74,11 +85,6 @@ const App: React.FC = () => {
               {/* Client Space */}
               <Route element={<ClientLayout />}>
                 <Route path="/dashboard/*" element={<Dashboard />} />
-              </Route>
-
-              {/* Master Control Space (Obfuscated) */}
-              <Route element={<MasterAdminLayout />}>
-                <Route path="/prio56" element={<MasterAdminCabinet />} />
               </Route>
 
               {/* Catch all */}
