@@ -12,6 +12,13 @@ export const MobileDebugger: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (user) {
+      console.log("AUTH METADATA (RAW): " + JSON.stringify(user.user_metadata || {}));
+      console.log("AUTH ID: " + user.id);
+    }
+  }, [user]);
+
+  useEffect(() => {
     // Save original methods
     const originalLog = console.log;
     const originalError = console.error;

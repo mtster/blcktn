@@ -25,6 +25,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
+  
+  // Calculate isAdmin based on multiple factors:
+  // 1. Hardcoded Master ID
+  // 2. Supabase Auth Metadata (raw_user_meta_data)
+  // 3. Database Profile Table
+  const isAdmin = 
+    user?.id === MASTER_ID || 
+    (user?.user_metadata?.is_admin === true) || 
+    (profile?.is_admin === true);
 
   useEffect(() => {
     // Get initial session
@@ -65,12 +74,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         status: 'active',
         created_at: new Date().toISOString()
       });
-      setAuthError(null); // Clear any DB errors to allow UI to render
+      setAuthError(null); 
     } else {
-      // If no user, mock one for the sake of the bypass
       console.warn("Forcing admin mode on null session (Virtual Mode)");
       const virtualId = 'virtual-admin';
-      setUser({ id: virtualId } as User);
+      setUser({ id: virtualId, user_metadata: { is_admin: true } } as User);
       setProfile({
         id: virtualId,
         company_name: "VIRTUAL_ADMIN",
@@ -86,11 +94,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchProfile = async (userId: string) => {
     console.log(`STEP 2: Checking for Master ID match...`);
     
-    // HARDCORE OVERRIDE
+    // HARDCORE OVERRIDE / METADATA CHECK
+    // If we are master OR have metadata, we can basically consider ourselves "loaded" enough to start
+    // even if the DB fetch fails later.
     if (userId === MASTER_ID) {
        console.log("STEP 2 RESULT: MATCHED. Engaging System Override.");
-       console.warn("SYSTEM OVERRIDE: Master ID detected. Bypassing Database entirely.");
        
+       // Set a provisional profile immediately
        setProfile({
          id: userId,
          company_name: "SYSTEM OVERRIDE",
@@ -98,9 +108,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
          status: 'active',
          created_at: new Date().toISOString()
        });
-       setAuthError(null);
-       setLoading(false); // IMMEDIATE UNBLOCK
-       return; // EXIT FUNCTION, DO NOT TOUCH DB
+       
+       // Attempt DB fetch in background, but don't block loading
+       setLoading(false);
+       
+       // We still try to fetch to get real company name if possible, but catch errors silently
+       try {
+          const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
+          if (data) setProfile(data as Profile);
+          if (error) console.warn("Background DB fetch failed (ignored due to Override):", error.message);
+       } catch (e) {
+          console.warn("Background DB fetch exception (ignored):", e);
+       }
+       return;
     }
 
     console.log("STEP 2 RESULT: NO MATCH. Proceeding to DB fetch.");
@@ -147,7 +167,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       user, 
       profile, 
       loading, 
-      isAdmin: profile?.is_admin || false,
+      isAdmin, // Now uses the robust derived check
       authError,
       signOut,
       forceAdminMode
