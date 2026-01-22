@@ -2,11 +2,10 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../lib/supabase';
-import { Profile, Audit } from '../types';
+import { Profile } from '../types';
 
 export const MasterAdminCabinet: React.FC = () => {
   const [users, setUsers] = useState<Profile[]>([]);
-  const [audits, setAudits] = useState<Audit[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     total: 0,
@@ -14,21 +13,18 @@ export const MasterAdminCabinet: React.FC = () => {
     active: 0
   });
 
-  const fetchData = async () => {
+  const fetchUsers = async () => {
     setLoading(true);
     try {
-      const [usersResponse, auditsResponse] = await Promise.all([
-        supabase.from('profiles').select('*').order('created_at', { ascending: false }),
-        supabase.from('audits').select('*').order('created_at', { ascending: false })
-      ]);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      if (usersResponse.error) throw usersResponse.error;
-      if (auditsResponse.error) throw auditsResponse.error;
+      if (error) throw error;
       
-      const profiles = usersResponse.data || [];
+      const profiles = data || [];
       setUsers(profiles);
-      setAudits(auditsResponse.data || []);
-
       setStats({
         total: profiles.length,
         pending: profiles.filter(u => u.status === 'pending').length,
@@ -49,14 +45,14 @@ export const MasterAdminCabinet: React.FC = () => {
         .eq('id', id);
 
       if (error) throw error;
-      fetchData(); // Refresh data
+      fetchUsers(); // Refresh data
     } catch (error) {
       alert('Action failed: ' + (error as Error).message);
     }
   };
 
   useEffect(() => {
-    fetchData();
+    fetchUsers();
   }, []);
 
   return (
@@ -66,7 +62,7 @@ export const MasterAdminCabinet: React.FC = () => {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-red-500/20 bg-red-500/5 text-red-400 text-[10px] font-black tracking-[0.2em] mb-4">
             MASTER CONTROL LAYER
           </div>
-          <h1 className="text-5xl font-black tracking-tighter mb-2">BLACKTON MASTER CONTROL</h1>
+          <h1 className="text-5xl font-black tracking-tighter mb-2">BLACKTON COMMAND</h1>
           <p className="text-white/40 max-w-2xl">Global enterprise state management and compliance override center.</p>
         </header>
 
@@ -88,7 +84,7 @@ export const MasterAdminCabinet: React.FC = () => {
           <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
             <h3 className="font-bold text-lg">Entity Directory</h3>
             <button 
-              onClick={fetchData}
+              onClick={fetchUsers}
               className="px-4 py-2 text-xs font-bold text-white/40 hover:text-white transition-colors"
             >
               FORCE REFRESH
@@ -165,50 +161,6 @@ export const MasterAdminCabinet: React.FC = () => {
                             Restore
                           </button>
                         )}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Audits Table */}
-        <div className="glass rounded-3xl border border-white/5 overflow-hidden mt-12">
-          <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
-            <h3 className="font-bold text-lg">Audits Ledger</h3>
-            <span className="text-xs text-white/40">{audits.length} Records</span>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-white/5 text-[10px] font-bold text-white/30 uppercase tracking-widest bg-white/[0.01]">
-                  <th className="px-8 py-6">Audit ID</th>
-                  <th className="px-8 py-6">User ID</th>
-                  <th className="px-8 py-6">Status</th>
-                  <th className="px-8 py-6">Created At</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {loading ? (
-                   <tr><td colSpan={4} className="px-8 py-20 text-center text-white/20 animate-pulse font-bold tracking-widest">LOADING AUDITS...</td></tr>
-                ) : audits.length === 0 ? (
-                   <tr><td colSpan={4} className="px-8 py-20 text-center text-white/20">NO AUDIT RECORDS FOUND</td></tr>
-                ) : (
-                  audits.map((audit) => (
-                    <tr key={audit.id} className="group hover:bg-white/[0.02] transition-colors">
-                      <td className="px-8 py-6 font-mono text-xs text-white/40">{audit.id}</td>
-                      <td className="px-8 py-6 font-mono text-xs text-white/40">{audit.user_id}</td>
-                      <td className="px-8 py-6">
-                        <span className={`text-xs font-bold uppercase tracking-tighter ${
-                          audit.status === 'completed' ? 'text-emerald-400' :
-                          audit.status === 'processing' ? 'text-amber-400' : 'text-red-400'
-                        }`}>{audit.status}</span>
-                      </td>
-                      <td className="px-8 py-6 text-sm font-medium text-white/40">
-                        {new Date(audit.created_at).toLocaleString()}
                       </td>
                     </tr>
                   ))

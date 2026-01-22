@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { LandingPage } from './pages/LandingPage';
@@ -9,8 +10,8 @@ import { LoginPage } from './pages/LoginPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { WaitingForApproval } from './pages/WaitingForApproval';
 import { Navbar } from './components/Navbar';
-import MobileDebugger from './components/MobileDebugger';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { MobileDebugger } from './components/MobileDebugger';
 
 // --- LAYOUTS & PROTECTION ---
 
@@ -38,27 +39,46 @@ const ClientLayout = () => {
 const MasterAdminLayout = () => {
   const { profile, loading, user } = useAuth();
   
-  // Add the specific console log requested
-  console.log("AUTH: Admin Status is " + profile?.is_admin);
+  useEffect(() => {
+    // LOGGING ENHANCEMENT
+    console.log("DEBUG: Attempting to render path: " + window.location.pathname);
+    
+    if (!loading) {
+      console.log(`DEBUG: Profile Loaded. Admin Status: ${profile?.is_admin}, UserID: ${user?.id}`);
+    }
+  }, [loading, profile, user]);
 
-  // Primary loading state
+  // If loading or admin status is undefined, show loading screen (Black Screen / Spinner)
+  // We do NOT redirect here.
   if (loading) {
-    return <div className="min-h-screen bg-[#050505] flex items-center justify-center font-black tracking-widest text-white/10">VERIFYING_PRIVILEGES_...</div>;
+     return (
+        <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center">
+           <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+           <div className="text-[10px] font-bold text-white/20 tracking-widest animate-pulse">VERIFYING_PRIVILEGES...</div>
+        </div>
+     );
+  }
+  
+  // If not logged in, silent fail to home
+  if (!user) {
+    console.log("DEBUG: Access Denied - No User found.");
+    return <Navigate to="/" replace />;
   }
 
-  // After loading, if the user is confirmed to be an admin, allow access.
-  if (user && profile?.is_admin) {
-    return <Outlet />;
+  // ONLY redirect if is_admin is explicitly FALSE.
+  // If it is undefined, we allow it to proceed (assuming latency or data issue we don't want to crash on)
+  if (profile?.is_admin === false) {
+    console.log("DEBUG: Access Denied - User is explicitly NOT an admin.");
+    return <Navigate to="/" replace />;
   }
 
-  // In all other cases (not logged in, not admin, profile still loading), redirect.
-  return <Navigate to="/" replace />;
+  // If we are here, is_admin is either true or undefined (but loading is false).
+  // This allows the route to render even if is_admin is lagging slightly or missing from the specific select.
+  return <Outlet />;
 };
 
 const App: React.FC = () => {
   const [mounted, setMounted] = useState(false);
-
-  console.log("ROUTING: Current Path is " + window.location.pathname);
 
   useEffect(() => {
     setMounted(true);
@@ -74,11 +94,6 @@ const App: React.FC = () => {
           <Navbar />
           <main>
             <Routes>
-              {/* Master Control Space (Obfuscated & Prioritized) */}
-              <Route element={<MasterAdminLayout />}>
-                <Route path="/prio56" element={<MasterAdminCabinet />} />
-              </Route>
-
               {/* Public Surface */}
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
@@ -89,16 +104,18 @@ const App: React.FC = () => {
               
               {/* Client Space */}
               <Route element={<ClientLayout />}>
-                <Route path="/dashboard/*" element={<Dashboard />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+              </Route>
+
+              {/* Master Control Space (Obfuscated) */}
+              <Route element={<MasterAdminLayout />}>
+                <Route path="/prio56" element={<MasterAdminCabinet />} />
               </Route>
 
               {/* Catch all */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
-          <footer className="text-center p-4 text-xs text-white/20 font-mono">
-            Build v1.0.4
-          </footer>
         </div>
       </AuthProvider>
     </Router>

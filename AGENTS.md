@@ -1,3 +1,4 @@
+
 # Agent Protocols: Blackton Development
 
 ## Context
@@ -39,23 +40,3 @@ When working on this codebase, prioritize the following:
 
 ## Known Issues
 -   The "Blank Screen" on Vercel is due to missing build steps or native browser execution limits. Ensure the deployment pipeline handles `.tsx` compilation (e.g., Vite).
-
----
-
-## **Session Debrief**
-
-### What was fixed:
--   **`/prio56` Route Order:** The admin route was moved to the top of the `Routes` block in `App.tsx` to prevent it from being overshadowed by other routes.
--   **Admin Guard Logic:** The `MasterAdminLayout` was updated to handle the auth loading state more gracefully before redirecting.
--   **Debugging:** Added extensive `console.log` statements to `App.tsx` to trace route and auth status in production.
-
-### New Features:
--   **Mobile Debugger (`components/MobileDebugger.tsx`):** A floating debugger icon was added for non-localhost environments. It captures all console logs and errors, allowing for inspection and copying on live deployments.
--   **Version Footer:** A static build version (`v1.0.4`) was added to the footer in `App.tsx` to help verify deployment updates.
-
-### New Table Names or Environment Variables:
--   None.
-
-### Current Known Bugs & Next Steps:
--   **Primary Bug:** The `/prio56` route is still being ignored on the production Vercel deployment, causing a redirect to the base URL.
--   **Next Steps:** The primary objective is to use the newly implemented **Mobile Debugger** on the live site to capture the console logs. These logs should reveal why the routing or the admin guard is failing.

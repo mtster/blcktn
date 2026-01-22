@@ -1,51 +1,67 @@
-import React, { useState, useEffect, useCallback } from 'react';
 
-const MobileDebugger: React.FC = () => {
+import React, { useState, useEffect } from 'react';
+
+export const MobileDebugger: React.FC = () => {
   const [logs, setLogs] = useState<string[]>([]);
-  const [expanded, setExpanded] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // Only show the debugger on non-localhost environments
-    if (window.location.hostname !== 'localhost') {
-      setIsVisible(true);
-    }
+    // Save original methods
+    const originalLog = console.log;
+    const originalError = console.error;
+    const originalWarn = console.warn;
 
-    const originalConsoleLog = console.log;
-    const originalConsoleError = console.error;
-
-    const newConsoleLog = (...args: any[]) => {
-      setLogs(prevLogs => [...prevLogs, `LOG: ${JSON.stringify(args)}`]);
-      originalConsoleLog.apply(console, args);
+    const formatMessage = (args: any[]) => {
+      return args.map(arg => {
+        if (typeof arg === 'object') {
+          try {
+            return JSON.stringify(arg);
+          } catch (e) {
+            return '[Object]';
+          }
+        }
+        return String(arg);
+      }).join(' ');
     };
 
-    const newConsoleError = (...args: any[]) => {
-      setLogs(prevLogs => [...prevLogs, `ERROR: ${JSON.stringify(args)}`]);
-      originalConsoleError.apply(console, args);
+    const addLog = (type: string, args: any[]) => {
+      const msg = formatMessage(args);
+      const timestamp = new Date().toLocaleTimeString().split(' ')[0];
+      setLogs(prev => [`[${timestamp}] [${type}] ${msg}`, ...prev].slice(0, 100));
     };
 
-    console.log = newConsoleLog;
-    console.error = newConsoleError;
+    console.log = (...args) => {
+      addLog('LOG', args);
+      originalLog(...args);
+    };
+
+    console.error = (...args) => {
+      addLog('ERR', args);
+      originalError(...args);
+    };
+
+    console.warn = (...args) => {
+      addLog('WRN', args);
+      originalWarn(...args);
+    };
 
     return () => {
-      console.log = originalConsoleLog;
-      console.error = originalConsoleError;
+      console.log = originalLog;
+      console.error = originalError;
+      console.warn = originalWarn;
     };
   }, []);
 
-  const copyLogsToClipboard = useCallback(() => {
+  const copyToClipboard = () => {
     navigator.clipboard.writeText(logs.join('\n'));
-  }, [logs]);
+    // We could show a toast here, but simple visual feedback is usually enough for debug tools
+  };
 
-  if (!isVisible) {
-    return null;
-  }
-
-  if (!expanded) {
+  if (!isOpen) {
     return (
-      <button
-        onClick={() => setExpanded(true)}
-        className="fixed bottom-4 right-4 w-12 h-12 bg-red-500 text-white rounded-full flex items-center justify-center text-lg font-bold z-50"
+      <button 
+        onClick={() => setIsOpen(true)}
+        className="fixed bottom-4 right-4 z-[9999] w-12 h-12 bg-red-500/80 hover:bg-red-500 backdrop-blur-md rounded-full flex items-center justify-center text-2xl shadow-lg shadow-red-500/20 hover:scale-110 transition-transform border border-white/10"
       >
         🐞
       </button>
@@ -53,27 +69,52 @@ const MobileDebugger: React.FC = () => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 text-white z-50 p-4 flex flex-col">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-bold">Mobile Debugger</h2>
-        <div>
-          <button
-            onClick={copyLogsToClipboard}
-            className="bg-gray-700 px-4 py-2 rounded mr-2"
+    <div className="fixed bottom-0 left-0 right-0 h-[50vh] bg-[#050505]/95 backdrop-blur-xl border-t border-white/10 z-[9999] flex flex-col font-mono text-[10px] shadow-2xl animate-in slide-in-from-bottom duration-300">
+      {/* Header Bar */}
+      <div className="flex items-center justify-between px-4 py-3 bg-white/5 border-b border-white/5">
+        <div className="flex items-center gap-2">
+           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+           <span className="text-white/60 font-bold uppercase tracking-widest">System Console</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => setLogs([])} 
+            className="p-2 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-colors" 
+            title="Clear Logs"
           >
-            Copy Logs
+            🗑️
           </button>
-          <button
-            onClick={() => setExpanded(false)}
-            className="bg-red-500 px-4 py-2 rounded"
+          <button 
+            onClick={copyToClipboard} 
+            className="p-2 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-colors" 
+            title="Copy to Clipboard"
           >
-            X
+            📋
+          </button>
+          <button 
+            onClick={() => setIsOpen(false)} 
+            className="p-2 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-colors ml-2 border-l border-white/10" 
+            title="Minimize"
+          >
+            ➖
           </button>
         </div>
       </div>
-      <div className="flex-grow overflow-y-auto bg-gray-900 p-2 rounded">
-        {logs.map((log, index) => (
-          <div key={index} className="font-mono text-sm mb-2">
+      
+      {/* Log Content */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-1.5 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+        {logs.length === 0 && (
+          <div className="h-full flex flex-col items-center justify-center text-white/20">
+            <span className="text-2xl mb-2">⚡</span>
+            <span>Awaiting system events...</span>
+          </div>
+        )}
+        {logs.map((log, i) => (
+          <div key={i} className={`font-mono break-all py-0.5 border-b border-white/[0.02] ${
+            log.includes('[ERR]') ? 'text-red-400 bg-red-500/5 px-2 -mx-2 rounded' : 
+            log.includes('[WRN]') ? 'text-amber-400' : 
+            'text-emerald-400/80'
+          }`}>
             {log}
           </div>
         ))}
@@ -81,5 +122,3 @@ const MobileDebugger: React.FC = () => {
     </div>
   );
 };
-
-export default MobileDebugger;
