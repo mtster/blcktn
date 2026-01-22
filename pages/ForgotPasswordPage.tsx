@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { motion } from 'framer-motion';
@@ -17,8 +16,9 @@ export const ForgotPasswordPage: React.FC = () => {
     setError(null);
 
     try {
+      // Removed /# from the redirect URL for compatibility with BrowserRouter
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/#/reset-password', // Adjust if using different routing
+        redirectTo: window.location.origin + '/reset-password',
       });
       if (error) throw error;
       setMessage("If an account exists, we've sent a password reset link.");

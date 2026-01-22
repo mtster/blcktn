@@ -1,6 +1,6 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 const HeroSection = () => (
   <section className="relative pt-40 pb-32 px-6 overflow-hidden">
@@ -145,8 +145,8 @@ export const LandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
           <span className="text-white/20 text-sm">© 2024 Blackton Technologies Inc.</span>
           <div className="flex gap-8 text-sm text-white/40">
-            <a href="#/privacy" className="hover:text-white">Privacy</a>
-            <a href="#/terms" className="hover:text-white">Terms</a>
+            <Link to="/privacy" className="hover:text-white">Privacy</Link>
+            <Link to="/terms" className="hover:text-white">Terms</Link>
             <a href="mailto:hq@blackton.io" className="hover:text-white">Contact</a>
           </div>
         </div>
