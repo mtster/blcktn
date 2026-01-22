@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { LandingPage } from './pages/LandingPage';
@@ -21,17 +20,21 @@ const ProtectedRoute = () => {
   if (!user) return <Navigate to="/login" />;
   
   if (profile?.status === 'pending') return <Navigate to="/waiting-approval" />;
-  if (profile?.status === 'suspended') return <div className="min-h-screen pt-40 text-center text-red-500">Account Suspended</div>;
+  if (profile?.status === 'suspended') return <div className="min-h-screen pt-40 text-center text-red-500 font-bold">ACCOUNT SUSPENDED</div>;
 
   return <Outlet />;
 };
 
-// Admin Route Component
+// Admin Route Component (Obfuscated protection)
 const AdminRoute = () => {
-  const { profile, loading } = useAuth();
+  const { profile, loading, user } = useAuth();
   
-  if (loading) return null;
-  if (!profile?.is_admin) return <Navigate to="/dashboard" />;
+  if (loading) return <div className="min-h-screen bg-[#050505] flex items-center justify-center text-white/30">Verifying Admin Privileges...</div>;
+  
+  // If not logged in or not an admin, redirect to home (silent fail/security)
+  if (!user || !profile?.is_admin) {
+    return <Navigate to="/" replace />;
+  }
 
   return <Outlet />;
 };
@@ -51,10 +54,14 @@ const AppContent: React.FC = () => {
           
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            {/* Obfuscated Admin Route */}
             <Route element={<AdminRoute />}>
-              <Route path="/admin" element={<AdminPage />} />
+              <Route path="/prio56" element={<AdminPage />} />
             </Route>
           </Route>
+
+          {/* Catch all to home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
     </div>

@@ -9,8 +9,8 @@ interface State {
   error: Error | null;
 }
 
-// Fixed Error: Property 'props' does not exist on type 'ErrorBoundary' by explicitly extending React.Component.
-export class ErrorBoundary extends React.Component<Props, State> {
+// Fix: Inherit from Component directly to ensure TypeScript correctly recognizes 'props' and 'state' properties on the class instance.
+export class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
     error: null,
@@ -54,7 +54,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
       );
     }
 
-    // Accessing this.props.children correctly after ensuring inheritance from React.Component.
+    // Fix: Using this.props.children is now valid as inheritance from Component<Props, State> is explicitly established.
     return this.props.children;
   }
 }

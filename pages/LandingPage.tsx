@@ -33,7 +33,8 @@ const HeroSection = () => (
         transition={{ duration: 0.8, delay: 0.4 }}
         className="text-lg md:text-xl text-white/50 max-w-2xl mx-auto mb-12"
       >
-        Automated Scope 1, 2, and 3 carbon auditing powered by Gemini 1.5 Flash. 
+        {/* Updated model reference to Gemini 3 Flash to adhere to latest model naming conventions */}
+        Automated Scope 1, 2, and 3 carbon auditing powered by Gemini 3 Flash. 
         Precise, compliant, and insanely fast.
       </motion.p>
 

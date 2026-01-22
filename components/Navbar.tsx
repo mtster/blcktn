@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -24,16 +23,17 @@ export const Navbar: React.FC = () => {
             {profile?.status === 'active' && (
               <Link to="/dashboard" className={`hover:text-white transition-colors ${isActive('/dashboard') ? 'text-white' : ''}`}>Dashboard</Link>
             )}
-            {profile?.is_admin && (
-              <Link to="/admin" className={`hover:text-white transition-colors ${isActive('/admin') ? 'text-white' : ''}`}>Administration</Link>
-            )}
+            {/* Admin link removed for security through obscurity */}
           </div>
         )}
 
         <div className="flex items-center gap-4">
           {!loading && user ? (
             <>
-              <span className="text-xs font-bold text-white/30 hidden sm:block">{profile?.company_name}</span>
+              <div className="flex flex-col items-end mr-2">
+                <span className="text-[10px] font-bold text-white/30 uppercase tracking-tighter">{profile?.company_name}</span>
+                {profile?.is_admin && <span className="text-[8px] bg-emerald-500/10 text-emerald-400 px-1 rounded font-bold">ADMIN</span>}
+              </div>
               <button 
                 onClick={() => { signOut(); navigate('/'); }}
                 className="text-sm font-medium hover:text-white transition-colors text-white/60"
