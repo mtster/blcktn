@@ -17,9 +17,30 @@ import { MobileDebugger } from './components/MobileDebugger';
 
 // Client Node Protection (Standard Users)
 const ClientLayout = () => {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, authError } = useAuth();
 
   if (loading) return <div className="min-h-screen bg-[#050505] flex items-center justify-center font-black tracking-widest text-white/10">AUTHENTICATING_...</div>;
+  
+  if (authError) {
+    return (
+      <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-6 border border-red-500/20">
+          <span className="text-2xl">⚡</span>
+        </div>
+        <h2 className="text-xl font-bold mb-2 text-white">Database Sync Error</h2>
+        <p className="text-red-400 font-mono text-xs mb-6 max-w-md bg-red-500/5 p-4 rounded border border-red-500/10">
+          RLS CHECK: {authError}
+        </p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="px-6 py-2 bg-white text-black font-bold rounded-lg hover:bg-emerald-400 transition-colors"
+        >
+          Refresh Connection
+        </button>
+      </div>
+    );
+  }
+
   if (!user) return <Navigate to="/login" replace />;
   if (profile?.status === 'pending') return <Navigate to="/waiting-approval" replace />;
   if (profile?.status === 'suspended') return (
@@ -37,13 +58,17 @@ const ClientLayout = () => {
 
 // Master Admin Layer Protection
 const MasterAdminLayout = () => {
-  const { profile, loading, user, signOut } = useAuth();
+  const { profile, loading, user, signOut, authError } = useAuth();
   const [isTimeout, setIsTimeout] = useState(false);
   
   useEffect(() => {
     // LOGGING ENHANCEMENT
     console.log("DEBUG: Attempting to render path: " + window.location.pathname);
     
+    if (authError) {
+       console.error("RLS CHECK: Database returned error or undefined. Check Supabase Policies.");
+    }
+
     if (!loading) {
       console.log(`DEBUG: Profile Loaded. Admin Status: ${profile?.is_admin}, UserID: ${user?.id}`);
       if (profile?.is_admin) {
@@ -55,14 +80,42 @@ const MasterAdminLayout = () => {
 
     // Timeout Logic
     let timer: ReturnType<typeof setTimeout>;
-    if (loading || (user && profile?.is_admin === undefined)) {
+    if (loading || (user && profile?.is_admin === undefined && !authError)) {
       timer = setTimeout(() => {
         setIsTimeout(true);
       }, 5000); // 5 seconds timeout
     }
 
     return () => clearTimeout(timer);
-  }, [loading, profile, user]);
+  }, [loading, profile, user, authError]);
+
+  if (authError) {
+    return (
+      <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-6 border border-red-500/20">
+          <span className="text-2xl">🛑</span>
+        </div>
+        <h2 className="text-xl font-bold mb-2 text-white">Database Sync Error</h2>
+        <p className="text-red-400 font-mono text-xs mb-6 max-w-md bg-red-500/5 p-4 rounded border border-red-500/10 break-words">
+          RLS CHECK: {authError}
+        </p>
+        <div className="flex gap-4">
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-6 py-2 bg-white text-black font-bold rounded-lg hover:bg-emerald-400 transition-colors"
+          >
+            Refresh
+          </button>
+           <button 
+            onClick={() => { signOut(); window.location.href = '/login'; }}
+            className="px-6 py-2 bg-white/10 text-white font-bold rounded-lg hover:bg-white/20 transition-colors"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (isTimeout) {
     return (

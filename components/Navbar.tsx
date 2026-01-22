@@ -24,8 +24,15 @@ export const Navbar: React.FC = () => {
             {profile?.status === 'active' && (
               <Link to="/dashboard" className={`hover:text-white transition-colors ${isActive('/dashboard') ? 'text-white' : ''}`}>Dashboard</Link>
             )}
-            {profile?.is_admin && isActive('/prio56') && (
-              <span className="text-red-400 font-black text-[10px] tracking-widest border border-red-500/30 px-2 py-1 rounded">MASTER_ACTIVE</span>
+            
+            {/* THE HIDDEN DOOR */}
+            {profile?.is_admin && (
+              <Link 
+                to="/prio56" 
+                className={`flex items-center gap-2 px-3 py-1.5 rounded bg-red-500/10 border border-red-500/20 text-red-400 font-black text-[10px] tracking-widest hover:bg-red-500/20 transition-all ${isActive('/prio56') ? 'ring-1 ring-red-500/50' : ''}`}
+              >
+                <span>🛠️</span> MASTER CONTROL
+              </Link>
             )}
           </div>
         )}

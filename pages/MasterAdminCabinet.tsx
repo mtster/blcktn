@@ -4,11 +4,13 @@ import { motion } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import { Profile } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export const MasterAdminCabinet: React.FC = () => {
   const [users, setUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, signOut } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
@@ -58,6 +60,11 @@ export const MasterAdminCabinet: React.FC = () => {
     }
   };
 
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/');
+  };
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -65,12 +72,21 @@ export const MasterAdminCabinet: React.FC = () => {
   return (
     <div className="pt-24 min-h-screen bg-[#050505] pb-20">
       <div className="max-w-7xl mx-auto px-6">
-        <header className="mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-red-500/20 bg-red-500/5 text-red-400 text-[10px] font-black tracking-[0.2em] mb-4">
-            MASTER CONTROL LAYER
+        <header className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-red-500/20 bg-red-500/5 text-red-400 text-[10px] font-black tracking-[0.2em] mb-4">
+              MASTER CONTROL LAYER
+            </div>
+            <h1 className="text-5xl font-black tracking-tighter mb-2">BLACKTON COMMAND</h1>
+            <p className="text-white/40 max-w-2xl">Global enterprise state management and compliance override center.</p>
           </div>
-          <h1 className="text-5xl font-black tracking-tighter mb-2">BLACKTON COMMAND</h1>
-          <p className="text-white/40 max-w-2xl">Global enterprise state management and compliance override center.</p>
+          
+          <button 
+            onClick={handleLogout}
+            className="px-6 py-2.5 bg-white/5 border border-white/10 hover:bg-white/10 text-white/60 hover:text-white font-bold rounded-lg transition-colors flex items-center gap-2 text-sm"
+          >
+            <span>🚪</span> LOGOUT SESSION
+          </button>
         </header>
 
         {/* Admin Stats Grid */}

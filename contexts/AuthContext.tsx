@@ -10,6 +10,7 @@ interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   isAdmin: boolean;
+  authError: string | null;
   signOut: () => Promise<void>;
 }
 
@@ -20,6 +21,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     // Get initial session
@@ -50,6 +52,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchProfile = async (userId: string) => {
     console.log(`DATABASE: Fetching profile for UID: ${userId}`);
+    setAuthError(null); // Reset error state before fetch
+    
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -59,15 +63,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         console.error(`DATABASE ERROR: Code ${error.code} - ${error.message}`);
+        setAuthError(error.message);
+        
         if (error.code === '42P17') {
-           console.error("CRITICAL: Infinite recursion detected in RLS policy. Please update supabase/schema.sql with the SECURITY DEFINER fix.");
+           const msg = "CRITICAL: Infinite recursion detected in RLS policy. Please check Supabase Policies.";
+           console.error(msg);
+           setAuthError(msg);
         }
       } else {
         console.log("DATABASE: Profile loaded successfully:", data);
         setProfile(data as Profile);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Profile fetch unexpected error:', err);
+      setAuthError(err.message || "Unexpected Error");
     } finally {
       setLoading(false);
     }
@@ -76,6 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     await supabase.auth.signOut();
     setProfile(null);
+    setAuthError(null);
   };
 
   return (
@@ -85,6 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       profile, 
       loading, 
       isAdmin: profile?.is_admin || false,
+      authError,
       signOut 
     }}>
       {children}
