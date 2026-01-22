@@ -1,9 +1,21 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Resilience Check: Ensure API Key exists before crashing
+const apiKey = process.env.API_KEY;
+
+if (!apiKey) {
+  console.warn("⚠️ API_KEY is missing. Gemini features will fail.");
+}
+
+// Initialize only if key is present to avoid immediate crash, or handle gracefully
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 export const processUtilityBill = async (base64Image: string, mimeType: string) => {
+  if (!ai) {
+    throw new Error("Gemini API Key is missing. Please configure your environment.");
+  }
+
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
@@ -38,6 +50,10 @@ export const processUtilityBill = async (base64Image: string, mimeType: string) 
         }
       }
     });
+
+    if (!response.text) {
+      throw new Error("No text response from Gemini.");
+    }
 
     return JSON.parse(response.text);
   } catch (error) {
