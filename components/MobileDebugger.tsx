@@ -1,11 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../contexts/AuthContext';
 
 export const MobileDebugger: React.FC = () => {
   const [logs, setLogs] = useState<string[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const { forceAdminMode, user } = useAuth();
 
   useEffect(() => {
     // Save original methods
@@ -81,6 +83,16 @@ export const MobileDebugger: React.FC = () => {
              <span className="text-white/60 font-bold uppercase tracking-widest">System Console</span>
           </div>
           <div className="flex items-center gap-2">
+             {/* FORCE ADMIN BUTTON */}
+             {user && (
+                <button 
+                  onClick={forceAdminMode}
+                  className="px-2 py-1 bg-red-500/20 text-red-400 border border-red-500/50 rounded hover:bg-red-500 hover:text-black font-bold uppercase tracking-widest transition-colors mr-2 animate-pulse"
+                >
+                  FORCE ADMIN
+                </button>
+             )}
+
             <button 
               onClick={() => setLogs([])} 
               className="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded text-white/60 hover:text-white transition-colors flex items-center gap-2" 

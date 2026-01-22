@@ -9,6 +9,8 @@ export const Navbar: React.FC = () => {
   const { user, profile, signOut, loading } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
+  const MASTER_ID = '50529017-99f7-4797-9b27-3f363596dc2e';
+  const isMasterUser = user?.id === MASTER_ID;
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-[#050505]/80 backdrop-blur-xl">
@@ -26,7 +28,7 @@ export const Navbar: React.FC = () => {
             )}
             
             {/* THE HIDDEN DOOR */}
-            {profile?.is_admin && (
+            {(profile?.is_admin || isMasterUser) && (
               <Link 
                 to="/prio56" 
                 className={`flex items-center gap-2 px-3 py-1.5 rounded bg-red-500/10 border border-red-500/20 text-red-400 font-black text-[10px] tracking-widest hover:bg-red-500/20 transition-all ${isActive('/prio56') ? 'ring-1 ring-red-500/50' : ''}`}
@@ -41,7 +43,7 @@ export const Navbar: React.FC = () => {
           {!loading && user ? (
             <>
               <div className="flex flex-col items-end mr-2">
-                {profile?.is_admin ? (
+                {(profile?.is_admin || isMasterUser) ? (
                   <>
                     <span className="text-[10px] font-black text-red-400 uppercase tracking-widest">BLACKTON SYSTEM ADMIN</span>
                     <span className="text-[8px] text-white/20 font-mono">ROOT_LEVEL_ACCESS</span>
