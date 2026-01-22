@@ -36,7 +36,7 @@ export const Navbar: React.FC = () => {
               <div className="flex flex-col items-end mr-2">
                 {profile?.is_admin ? (
                   <>
-                    <span className="text-[10px] font-black text-red-400 uppercase tracking-widest">SYSTEM_ADMIN</span>
+                    <span className="text-[10px] font-black text-red-400 uppercase tracking-widest">BLACKTON SYSTEM ADMIN</span>
                     <span className="text-[8px] text-white/20 font-mono">ROOT_LEVEL_ACCESS</span>
                   </>
                 ) : (

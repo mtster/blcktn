@@ -3,10 +3,12 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import { Profile } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 
 export const MasterAdminCabinet: React.FC = () => {
   const [users, setUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user: currentUser } = useAuth();
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
@@ -113,60 +115,68 @@ export const MasterAdminCabinet: React.FC = () => {
                 ) : users.length === 0 ? (
                    <tr><td colSpan={5} className="px-8 py-20 text-center text-white/20">NO ENTITIES DETECTED</td></tr>
                 ) : (
-                  users.map((u) => (
-                    <tr key={u.id} className="group hover:bg-white/[0.02] transition-colors">
-                      <td className="px-8 py-6">
-                        <div className="font-bold text-white group-hover:text-emerald-400 transition-colors">{u.company_name}</div>
-                        <div className="text-[10px] font-mono text-white/20 uppercase mt-1">{u.id}</div>
-                      </td>
-                      <td className="px-8 py-6">
-                        <div className="flex items-center gap-2">
-                          <div className={`w-1.5 h-1.5 rounded-full ${
-                            u.status === 'active' ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 
-                            u.status === 'suspended' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 
-                            'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]'
-                          }`}></div>
-                          <span className={`text-xs font-bold uppercase ${
-                             u.status === 'active' ? 'text-emerald-400' : 
-                             u.status === 'suspended' ? 'text-red-400' : 
-                             'text-amber-400'
-                          }`}>{u.status}</span>
-                        </div>
-                      </td>
-                      <td className="px-8 py-6">
-                        <span className={`text-[10px] font-bold px-2 py-1 rounded border ${
-                          u.is_admin 
-                          ? 'border-red-500/30 text-red-400 bg-red-500/10' 
-                          : 'border-white/10 text-white/40 bg-white/5'
-                        }`}>
-                          {u.is_admin ? 'ROOT_ADMIN' : 'STANDARD_CLIENT'}
-                        </span>
-                      </td>
-                      <td className="px-8 py-6 text-sm text-white/40">
-                        {new Date(u.created_at).toLocaleDateString()}
-                      </td>
-                      <td className="px-8 py-6 text-right">
-                        <div className="flex justify-end gap-2">
-                          {u.status !== 'active' && (
-                            <button 
-                              onClick={() => updateStatus(u.id, 'active')}
-                              className="px-3 py-1.5 bg-emerald-500 text-black text-[10px] font-bold rounded hover:bg-emerald-400 transition-colors"
-                            >
-                              APPROVE
-                            </button>
-                          )}
-                          {u.status !== 'suspended' && (
-                            <button 
-                              onClick={() => updateStatus(u.id, 'suspended')}
-                              className="px-3 py-1.5 bg-white/5 hover:bg-red-500/10 text-white/40 hover:text-red-400 border border-white/10 hover:border-red-500/30 text-[10px] font-bold rounded transition-all"
-                            >
-                              SUSPEND
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                  users.map((u) => {
+                    const isMe = u.id === currentUser?.id;
+                    return (
+                      <tr key={u.id} className={`group transition-colors ${isMe ? 'bg-emerald-500/5' : 'hover:bg-white/[0.02]'}`}>
+                        <td className="px-8 py-6">
+                          <div className="flex items-center gap-3">
+                             <div className={`font-bold transition-colors ${isMe ? 'text-emerald-400' : 'text-white group-hover:text-emerald-400'}`}>
+                                {u.company_name}
+                             </div>
+                             {isMe && <span className="text-[9px] bg-emerald-500 text-black px-1.5 py-0.5 rounded font-bold">YOU</span>}
+                          </div>
+                          <div className="text-[10px] font-mono text-white/20 uppercase mt-1">{u.id}</div>
+                        </td>
+                        <td className="px-8 py-6">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-1.5 h-1.5 rounded-full ${
+                              u.status === 'active' ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 
+                              u.status === 'suspended' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 
+                              'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]'
+                            }`}></div>
+                            <span className={`text-xs font-bold uppercase ${
+                               u.status === 'active' ? 'text-emerald-400' : 
+                               u.status === 'suspended' ? 'text-red-400' : 
+                               'text-amber-400'
+                            }`}>{u.status}</span>
+                          </div>
+                        </td>
+                        <td className="px-8 py-6">
+                          <span className={`text-[10px] font-bold px-2 py-1 rounded border ${
+                            u.is_admin 
+                            ? 'border-red-500/30 text-red-400 bg-red-500/10' 
+                            : 'border-white/10 text-white/40 bg-white/5'
+                          }`}>
+                            {u.is_admin ? 'ROOT_ADMIN' : 'STANDARD_CLIENT'}
+                          </span>
+                        </td>
+                        <td className="px-8 py-6 text-sm text-white/40">
+                          {new Date(u.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-8 py-6 text-right">
+                          <div className="flex justify-end gap-2">
+                            {u.status !== 'active' && (
+                              <button 
+                                onClick={() => updateStatus(u.id, 'active')}
+                                className="px-3 py-1.5 bg-emerald-500 text-black text-[10px] font-bold rounded hover:bg-emerald-400 transition-colors"
+                              >
+                                APPROVE
+                              </button>
+                            )}
+                            {u.status !== 'suspended' && !isMe && (
+                              <button 
+                                onClick={() => updateStatus(u.id, 'suspended')}
+                                className="px-3 py-1.5 bg-white/5 hover:bg-red-500/10 text-white/40 hover:text-red-400 border border-white/10 hover:border-red-500/30 text-[10px] font-bold rounded transition-all"
+                              >
+                                SUSPEND
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

@@ -37,7 +37,8 @@ const ClientLayout = () => {
 
 // Master Admin Layer Protection
 const MasterAdminLayout = () => {
-  const { profile, loading, user } = useAuth();
+  const { profile, loading, user, signOut } = useAuth();
+  const [isTimeout, setIsTimeout] = useState(false);
   
   useEffect(() => {
     // LOGGING ENHANCEMENT
@@ -45,11 +46,45 @@ const MasterAdminLayout = () => {
     
     if (!loading) {
       console.log(`DEBUG: Profile Loaded. Admin Status: ${profile?.is_admin}, UserID: ${user?.id}`);
+      if (profile?.is_admin) {
+        console.log("AUTH SUCCESS: Admin Session Active");
+      }
+    } else {
+      console.log("DEBUG: Auth is loading...");
     }
+
+    // Timeout Logic
+    let timer: ReturnType<typeof setTimeout>;
+    if (loading || (user && profile?.is_admin === undefined)) {
+      timer = setTimeout(() => {
+        setIsTimeout(true);
+      }, 5000); // 5 seconds timeout
+    }
+
+    return () => clearTimeout(timer);
   }, [loading, profile, user]);
 
+  if (isTimeout) {
+    return (
+      <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center text-center p-6">
+        <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mb-6 border border-amber-500/20">
+          <span className="text-2xl">⚠️</span>
+        </div>
+        <h2 className="text-xl font-bold mb-2">Connection Timeout</h2>
+        <p className="text-white/40 text-sm mb-6 max-w-md">
+          The security handshake with the database is taking longer than expected. 
+        </p>
+        <button 
+          onClick={() => { signOut(); window.location.href = '/login'; }}
+          className="px-6 py-2 bg-white text-black font-bold rounded-lg hover:bg-emerald-400 transition-colors"
+        >
+          Logout & Retry
+        </button>
+      </div>
+    );
+  }
+
   // If loading OR is_admin is undefined (data hasn't arrived yet), show loading.
-  // We do NOT redirect here to prevent race conditions.
   if (loading || (user && profile?.is_admin === undefined)) {
      return (
         <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center">

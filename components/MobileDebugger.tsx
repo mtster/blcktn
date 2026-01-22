@@ -64,16 +64,16 @@ export const MobileDebugger: React.FC = () => {
     return (
       <button 
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 z-[9999] w-12 h-12 bg-red-500/80 hover:bg-red-500 backdrop-blur-md rounded-full flex items-center justify-center text-2xl shadow-lg shadow-red-500/20 hover:scale-110 transition-transform border border-white/10"
+        className="fixed bottom-4 right-4 z-[9999] w-12 h-12 bg-black hover:bg-[#0a0a0a] rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/10 hover:scale-110 transition-transform border border-emerald-500/50 group"
       >
-        🐞
+        <span className="font-mono font-bold text-emerald-500 text-sm group-hover:text-emerald-400">{`>_`}</span>
       </button>
     );
   }
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 h-[60vh] bg-[#050505]/95 backdrop-blur-xl border-t border-white/10 z-[9999] flex flex-col font-mono text-[10px] shadow-2xl animate-in slide-in-from-bottom duration-300">
+      <div className="fixed bottom-0 left-0 right-0 h-[40vh] bg-[#050505]/95 backdrop-blur-xl border-t border-white/10 z-[9999] flex flex-col font-mono text-[10px] shadow-2xl animate-in slide-in-from-bottom duration-300">
         {/* Header Bar */}
         <div className="flex items-center justify-between px-4 py-3 bg-white/5 border-b border-white/5 select-none">
           <div className="flex items-center gap-2">
@@ -132,7 +132,7 @@ export const MobileDebugger: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="fixed bottom-[62vh] left-1/2 -translate-x-1/2 z-[10000] bg-emerald-500 text-black px-4 py-2 rounded-full font-bold text-xs shadow-lg shadow-emerald-500/20"
+            className="fixed bottom-[42vh] left-1/2 -translate-x-1/2 z-[10000] bg-emerald-500 text-black px-4 py-2 rounded-full font-bold text-xs shadow-lg shadow-emerald-500/20"
           >
             Logs Copied to Clipboard!
           </motion.div>

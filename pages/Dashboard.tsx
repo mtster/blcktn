@@ -2,23 +2,29 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FileUploadModal } from '../components/FileUploadModal';
+import { useAuth } from '../contexts/AuthContext';
 
 export const Dashboard: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { profile } = useAuth();
+
+  const displayName = profile?.is_admin ? "BLACKTON SYSTEM ADMIN" : (profile?.company_name || 'Enterprise View');
 
   return (
     <div className="pt-24 min-h-screen px-6 max-w-7xl mx-auto pb-20">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
         <div>
           <h1 className="text-4xl font-bold tracking-tight mb-2">Portfolio Overview</h1>
-          <p className="text-white/40">Real-time carbon telemetry for Tesla Motors, Inc.</p>
+          <p className="text-white/40">Real-time carbon telemetry for <span className="text-white font-medium">{displayName}</span>.</p>
         </div>
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="px-6 py-3 bg-emerald-500 text-black font-bold rounded-xl hover:bg-emerald-400 transition-colors shadow-lg shadow-emerald-500/20"
-        >
-          New Audit Request
-        </button>
+        {!profile?.is_admin && (
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="px-6 py-3 bg-emerald-500 text-black font-bold rounded-xl hover:bg-emerald-400 transition-colors shadow-lg shadow-emerald-500/20"
+          >
+            New Audit Request
+          </button>
+        )}
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
