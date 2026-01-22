@@ -9,6 +9,7 @@ import { LoginPage } from './pages/LoginPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { WaitingForApproval } from './pages/WaitingForApproval';
 import { Navbar } from './components/Navbar';
+import MobileDebugger from './components/MobileDebugger';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 // --- LAYOUTS & PROTECTION ---
@@ -37,7 +38,8 @@ const ClientLayout = () => {
 const MasterAdminLayout = () => {
   const { profile, loading, user } = useAuth();
   
-  console.log('Admin Access Check:', { is_admin: profile?.is_admin, path: window.location.pathname });
+  // Add the specific console log requested
+  console.log("AUTH: Admin Status is " + profile?.is_admin);
 
   // Primary loading state
   if (loading) {
@@ -56,6 +58,8 @@ const MasterAdminLayout = () => {
 const App: React.FC = () => {
   const [mounted, setMounted] = useState(false);
 
+  console.log("ROUTING: Current Path is " + window.location.pathname);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -66,6 +70,7 @@ const App: React.FC = () => {
     <Router>
       <AuthProvider>
         <div className="min-h-screen bg-[#050505] text-white selection:bg-emerald-500/30">
+          <MobileDebugger />
           <Navbar />
           <main>
             <Routes>
@@ -91,6 +96,9 @@ const App: React.FC = () => {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
+          <footer className="text-center p-4 text-xs text-white/20 font-mono">
+            Build v1.0.4
+          </footer>
         </div>
       </AuthProvider>
     </Router>
