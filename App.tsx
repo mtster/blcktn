@@ -1,8 +1,9 @@
+
 import React, { useEffect, useState } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { LandingPage } from './pages/LandingPage';
 import { Dashboard } from './pages/Dashboard';
-import { AdminPage } from './pages/AdminPage';
+import { MasterAdminCabinet } from './pages/MasterAdminCabinet';
 import { PrivacyPage } from './pages/PrivacyPage';
 import { TermsPage } from './pages/TermsPage';
 import { LoginPage } from './pages/LoginPage';
@@ -11,61 +12,40 @@ import { WaitingForApproval } from './pages/WaitingForApproval';
 import { Navbar } from './components/Navbar';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
-// Protected Route Component
-const ProtectedRoute = () => {
+// --- LAYOUTS & PROTECTION ---
+
+// Client Node Protection (Standard Users)
+const ClientLayout = () => {
   const { user, profile, loading } = useAuth();
 
-  if (loading) return <div className="min-h-screen bg-[#050505] flex items-center justify-center text-white/30">Authenticating...</div>;
-  
-  if (!user) return <Navigate to="/login" />;
-  
-  if (profile?.status === 'pending') return <Navigate to="/waiting-approval" />;
-  if (profile?.status === 'suspended') return <div className="min-h-screen pt-40 text-center text-red-500 font-bold">ACCOUNT SUSPENDED</div>;
+  if (loading) return <div className="min-h-screen bg-[#050505] flex items-center justify-center font-black tracking-widest text-white/10">AUTHENTICATING_...</div>;
+  if (!user) return <Navigate to="/login" replace />;
+  if (profile?.status === 'pending') return <Navigate to="/waiting-approval" replace />;
+  if (profile?.status === 'suspended') return (
+    <div className="min-h-screen pt-40 text-center flex flex-col items-center justify-center p-6">
+      <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mb-8 border border-red-500/20">
+        <span className="text-4xl">🚫</span>
+      </div>
+      <h1 className="text-4xl font-black text-red-500 tracking-tighter mb-4">ACCESS_REVOKED</h1>
+      <p className="text-white/40 max-w-md">Your corporate credentials have been suspended by system administration. Please contact Blackton HQ for audit resolution.</p>
+    </div>
+  );
 
   return <Outlet />;
 };
 
-// Admin Route Component (Obfuscated protection)
-const AdminRoute = () => {
+// Master Admin Layer Protection
+const MasterAdminLayout = () => {
   const { profile, loading, user } = useAuth();
   
-  if (loading) return <div className="min-h-screen bg-[#050505] flex items-center justify-center text-white/30">Verifying Admin Privileges...</div>;
+  if (loading) return <div className="min-h-screen bg-[#050505] flex items-center justify-center font-black tracking-widest text-white/10">VERIFYING_PRIVILEGES_...</div>;
   
-  // If not logged in or not an admin, redirect to home (silent fail/security)
+  // If not logged in or NOT an admin, silent fail to home
   if (!user || !profile?.is_admin) {
     return <Navigate to="/" replace />;
   }
 
   return <Outlet />;
-};
-
-const AppContent: React.FC = () => {
-  return (
-    <div className="min-h-screen bg-[#050505] text-white selection:bg-emerald-500/30">
-      <Navbar />
-      <main>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/waiting-approval" element={<WaitingForApproval />} />
-          <Route path="/privacy" element={<PrivacyPage />} />
-          <Route path="/terms" element={<TermsPage />} />
-          
-          <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            {/* Obfuscated Admin Route */}
-            <Route element={<AdminRoute />}>
-              <Route path="/prio56" element={<AdminPage />} />
-            </Route>
-          </Route>
-
-          {/* Catch all to home */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </main>
-    </div>
-  );
 };
 
 const App: React.FC = () => {
@@ -75,14 +55,38 @@ const App: React.FC = () => {
     setMounted(true);
   }, []);
 
-  if (!mounted) {
-    return <div className="min-h-screen bg-[#050505]" />;
-  }
+  if (!mounted) return <div className="min-h-screen bg-[#050505]" />;
 
   return (
     <Router>
       <AuthProvider>
-        <AppContent />
+        <div className="min-h-screen bg-[#050505] text-white selection:bg-emerald-500/30">
+          <Navbar />
+          <main>
+            <Routes>
+              {/* Public Surface */}
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/waiting-approval" element={<WaitingForApproval />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/terms" element={<TermsPage />} />
+              
+              {/* Client Space */}
+              <Route element={<ClientLayout />}>
+                <Route path="/dashboard" element={<Dashboard />} />
+              </Route>
+
+              {/* Master Control Space (Obfuscated) */}
+              <Route element={<MasterAdminLayout />}>
+                <Route path="/prio56" element={<MasterAdminCabinet />} />
+              </Route>
+
+              {/* Catch all */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </main>
+        </div>
       </AuthProvider>
     </Router>
   );

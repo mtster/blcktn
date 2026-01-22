@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -23,7 +24,9 @@ export const Navbar: React.FC = () => {
             {profile?.status === 'active' && (
               <Link to="/dashboard" className={`hover:text-white transition-colors ${isActive('/dashboard') ? 'text-white' : ''}`}>Dashboard</Link>
             )}
-            {/* Admin link removed for security through obscurity */}
+            {profile?.is_admin && isActive('/prio56') && (
+              <span className="text-red-400 font-black text-[10px] tracking-widest border border-red-500/30 px-2 py-1 rounded">MASTER_ACTIVE</span>
+            )}
           </div>
         )}
 
@@ -31,12 +34,21 @@ export const Navbar: React.FC = () => {
           {!loading && user ? (
             <>
               <div className="flex flex-col items-end mr-2">
-                <span className="text-[10px] font-bold text-white/30 uppercase tracking-tighter">{profile?.company_name}</span>
-                {profile?.is_admin && <span className="text-[8px] bg-emerald-500/10 text-emerald-400 px-1 rounded font-bold">ADMIN</span>}
+                {profile?.is_admin ? (
+                  <>
+                    <span className="text-[10px] font-black text-red-400 uppercase tracking-widest">SYSTEM_ADMIN</span>
+                    <span className="text-[8px] text-white/20 font-mono">ROOT_LEVEL_ACCESS</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-[10px] font-bold text-white/30 uppercase tracking-tighter">{profile?.company_name}</span>
+                    <span className="text-[8px] bg-emerald-500/10 text-emerald-400 px-1 rounded font-bold uppercase">Authorized Client</span>
+                  </>
+                )}
               </div>
               <button 
                 onClick={() => { signOut(); navigate('/'); }}
-                className="text-sm font-medium hover:text-white transition-colors text-white/60"
+                className="text-sm font-medium hover:text-white transition-colors text-white/60 bg-white/5 px-4 py-2 rounded-lg border border-white/10"
               >
                 Logout
               </button>
