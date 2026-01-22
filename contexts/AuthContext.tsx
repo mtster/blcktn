@@ -29,6 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log(`STEP 1 (Init): Session Found? ${!!session}`);
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -40,6 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log(`STEP 1 (Event): Auth State Changed. User ID: ${session?.user?.id}`);
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -65,12 +67,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       setAuthError(null); // Clear any DB errors to allow UI to render
     } else {
-      console.warn("Cannot force admin mode: No user session active.");
+      // If no user, mock one for the sake of the bypass
+      console.warn("Forcing admin mode on null session (Virtual Mode)");
+      const virtualId = 'virtual-admin';
+      setUser({ id: virtualId } as User);
+      setProfile({
+        id: virtualId,
+        company_name: "VIRTUAL_ADMIN",
+        is_admin: true,
+        status: 'active',
+        created_at: new Date().toISOString()
+      });
+      setAuthError(null);
     }
+    setLoading(false);
   };
 
   const fetchProfile = async (userId: string) => {
-    console.log(`DATABASE: Fetching profile for UID: ${userId}`);
+    console.log(`STEP 2: Checking for Master ID match...`);
+    
+    // HARDCORE OVERRIDE
+    if (userId === MASTER_ID) {
+       console.log("STEP 2 RESULT: MATCHED. Engaging System Override.");
+       console.warn("SYSTEM OVERRIDE: Master ID detected. Bypassing Database entirely.");
+       
+       setProfile({
+         id: userId,
+         company_name: "SYSTEM OVERRIDE",
+         is_admin: true,
+         status: 'active',
+         created_at: new Date().toISOString()
+       });
+       setAuthError(null);
+       setLoading(false); // IMMEDIATE UNBLOCK
+       return; // EXIT FUNCTION, DO NOT TOUCH DB
+    }
+
+    console.log("STEP 2 RESULT: NO MATCH. Proceeding to DB fetch.");
+    console.log(`STEP 3: Profile fetch initiated for ${userId}...`);
     setAuthError(null); 
     
     try {
@@ -81,22 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
 
       if (error) {
-        console.error(`DATABASE ERROR: Code ${error.code} - ${error.message}`);
-        
-        // MASTER OVERRIDE FALLBACK
-        if (userId === MASTER_ID) {
-           console.warn("SYSTEM OVERRIDE: Master ID detected during fetch failure. Activating Emergency Fallback.");
-           setProfile({
-             id: userId,
-             company_name: "SYSTEM OVERRIDE",
-             is_admin: true,
-             status: 'active',
-             created_at: new Date().toISOString()
-           });
-           setAuthError(null); // Clear error so app loads
-           return;
-        }
-
+        console.error(`STEP 4: Profile fetch result: ERROR - ${error.message}`);
         setAuthError(error.message);
         
         if (error.code === '42P17') {
@@ -105,24 +124,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
            setAuthError(msg);
         }
       } else {
-        console.log("DATABASE: Profile loaded successfully:", data);
+        console.log("STEP 4: Profile fetch result: SUCCESS", data);
         setProfile(data as Profile);
       }
     } catch (err: any) {
-      console.error('Profile fetch unexpected error:', err);
-      // MASTER OVERRIDE FALLBACK (Catch Block)
-      if (userId === MASTER_ID) {
-           console.warn("SYSTEM OVERRIDE: Master ID detected during exception. Activating Emergency Fallback.");
-           setProfile({
-             id: userId,
-             company_name: "SYSTEM OVERRIDE",
-             is_admin: true,
-             status: 'active',
-             created_at: new Date().toISOString()
-           });
-           setAuthError(null);
-           return;
-      }
+      console.error('STEP 4: Profile fetch result: EXCEPTION', err);
       setAuthError(err.message || "Unexpected Error");
     } finally {
       setLoading(false);

@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 export const MasterAdminCabinet: React.FC = () => {
   const [users, setUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dbError, setDbError] = useState<boolean>(false);
   const { user: currentUser, signOut } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState({
@@ -19,6 +20,7 @@ export const MasterAdminCabinet: React.FC = () => {
 
   const fetchUsers = async () => {
     setLoading(true);
+    setDbError(false);
     console.log("MASTER_ADMIN: Starting user fetch...");
     try {
       const { data, error } = await supabase
@@ -28,19 +30,21 @@ export const MasterAdminCabinet: React.FC = () => {
 
       if (error) {
         console.error("MASTER_ADMIN: Fetch failed with error:", error);
-        throw error;
+        setDbError(true);
+        // Do not throw, just handle the UI state
+      } else {
+        console.log("MASTER_ADMIN: Fetch successful. Records found:", data?.length);
+        const profiles = data || [];
+        setUsers(profiles);
+        setStats({
+          total: profiles.length,
+          pending: profiles.filter(u => u.status === 'pending').length,
+          active: profiles.filter(u => u.status === 'active').length
+        });
       }
-      
-      console.log("MASTER_ADMIN: Fetch successful. Records found:", data?.length);
-      const profiles = data || [];
-      setUsers(profiles);
-      setStats({
-        total: profiles.length,
-        pending: profiles.filter(u => u.status === 'pending').length,
-        active: profiles.filter(u => u.status === 'active').length
-      });
     } catch (error) {
       console.error('Master Control Error:', error);
+      setDbError(true);
     } finally {
       setLoading(false);
     }
@@ -128,6 +132,16 @@ export const MasterAdminCabinet: React.FC = () => {
               <tbody className="divide-y divide-white/5">
                 {loading ? (
                    <tr><td colSpan={5} className="px-8 py-20 text-center text-white/20 animate-pulse font-bold tracking-widest">ESTABLISHING DATA LINK...</td></tr>
+                ) : dbError ? (
+                   <tr>
+                     <td colSpan={5} className="px-8 py-20 text-center">
+                        <div className="flex flex-col items-center">
+                           <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center mb-4 border border-red-500/20 text-xl">⚠️</div>
+                           <p className="text-white/60 font-bold mb-2">Database recursion detected.</p>
+                           <p className="text-white/30 text-xs font-mono mb-4">Master Bypass Active. Table data currently restricted.</p>
+                        </div>
+                     </td>
+                   </tr>
                 ) : users.length === 0 ? (
                    <tr><td colSpan={5} className="px-8 py-20 text-center text-white/20">NO ENTITIES DETECTED</td></tr>
                 ) : (

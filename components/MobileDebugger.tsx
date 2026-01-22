@@ -2,12 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export const MobileDebugger: React.FC = () => {
   const [logs, setLogs] = useState<string[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const { forceAdminMode, user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Save original methods
@@ -62,6 +64,19 @@ export const MobileDebugger: React.FC = () => {
     setTimeout(() => setShowToast(false), 2000);
   };
 
+  const handleForceAdmin = () => {
+    console.log("DEBUGGER: Force Admin engaged. Redirecting to Master Control...");
+    forceAdminMode();
+    navigate('/prio56');
+  };
+
+  const handleWipeSession = () => {
+    console.log("DEBUGGER: Wiping Session Cache...");
+    localStorage.clear();
+    setLogs([]);
+    window.location.reload();
+  };
+
   if (!isOpen) {
     return (
       <button 
@@ -84,14 +99,20 @@ export const MobileDebugger: React.FC = () => {
           </div>
           <div className="flex items-center gap-2">
              {/* FORCE ADMIN BUTTON */}
-             {user && (
-                <button 
-                  onClick={forceAdminMode}
-                  className="px-2 py-1 bg-red-500/20 text-red-400 border border-red-500/50 rounded hover:bg-red-500 hover:text-black font-bold uppercase tracking-widest transition-colors mr-2 animate-pulse"
-                >
-                  FORCE ADMIN
-                </button>
-             )}
+             <button 
+                onClick={handleForceAdmin}
+                className="px-2 py-1 bg-red-500/20 text-red-400 border border-red-500/50 rounded hover:bg-red-500 hover:text-black font-bold uppercase tracking-widest transition-colors mr-2 animate-pulse"
+             >
+                FORCE ADMIN
+             </button>
+
+             <button 
+                onClick={handleWipeSession}
+                className="px-2 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded hover:bg-amber-500 hover:text-black font-bold uppercase tracking-widest transition-colors mr-2"
+                title="Clear Local Storage & Logs"
+             >
+                WIPE SESSION
+             </button>
 
             <button 
               onClick={() => setLogs([])} 
