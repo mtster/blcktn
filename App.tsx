@@ -73,7 +73,7 @@ const App: React.FC = () => {
               
               {/* Client Space */}
               <Route element={<ClientLayout />}>
-                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard/*" element={<Dashboard />} />
               </Route>
 
               {/* Master Control Space (Obfuscated) */}
