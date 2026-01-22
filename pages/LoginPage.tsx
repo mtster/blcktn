@@ -39,19 +39,36 @@ export const LoginPage: React.FC = () => {
         
         alert('Check your email for the confirmation link!');
       } else {
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
           email,
           password
         });
-        if (error) throw error;
+        if (authError) throw authError;
+
+        // Fetch profile to determine navigation authority
+        // Ensure data consistency by fetching explicit fields
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, company_name, status, is_admin')
+          .eq('id', authData.session.user.id)
+          .maybeSingle();
         
-        // Immediate redirection based on metadata role
-        const isAdmin = data.session?.user.user_metadata?.is_admin;
-        if (isAdmin) {
-          console.log("Admin Login Detected. Redirecting to Panel...");
-          navigate('/prio56');
+        if (profileError) {
+          console.error("Profile fetch error during login:", profileError);
+          // Fallback to metadata if DB fetch fails
+          const isAdmin = authData.session?.user.user_metadata?.is_admin;
+          if (isAdmin) navigate('/prio56');
+          else navigate('/dashboard');
+        } else if (profileData) {
+          if (profileData.is_admin) {
+            console.log("Admin Login Verified. Redirecting...");
+            navigate('/prio56');
+          } else {
+            navigate('/dashboard');
+          }
         } else {
-          navigate('/dashboard');
+           // Profile not created yet, default to dashboard which will handle 'pending/creating' state
+           navigate('/dashboard');
         }
       }
     } catch (err: any) {

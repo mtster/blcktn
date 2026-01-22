@@ -22,26 +22,33 @@ export const MasterAdminCabinet: React.FC = () => {
     setDbError(false);
     
     try {
-      // Fetch all profiles EXCEPT the Master Admin ID to avoid cluttering the list
-      // Using .not() filter as requested
+      // Standard select as requested, fetching all profiles
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .not('id', 'eq', '50529017-99f7-4797-9b27-3f363596dc2e')
         .order('created_at', { ascending: false });
 
-      console.log("[ADMIN] Profiles count fetched: " + (data?.length || 0));
+      console.log("[DEBUG] Raw Profile Data:", data);
 
       if (error) {
         console.error("[MASTER] Fetch failed:", error.message);
         setDbError(true);
       } else {
         const profiles = data || [];
-        setUsers(profiles);
+        
+        if (profiles.length === 0) {
+          console.warn("[DEBUG] Empty set returned - Check RLS Policies");
+        }
+
+        // Local display filter: Hide the Master Admin ID
+        const MASTER_ID = '50529017-99f7-4797-9b27-3f363596dc2e';
+        const filteredProfiles = profiles.filter(u => u.id !== MASTER_ID);
+        
+        setUsers(filteredProfiles);
         setStats({
-          total: profiles.length,
-          pending: profiles.filter(u => u.status === 'pending').length,
-          active: profiles.filter(u => u.status === 'active').length
+          total: filteredProfiles.length,
+          pending: filteredProfiles.filter(u => u.status === 'pending').length,
+          active: filteredProfiles.filter(u => u.status === 'active').length
         });
       }
     } catch (error) {
