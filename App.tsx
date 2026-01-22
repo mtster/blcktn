@@ -18,10 +18,27 @@ import { MobileDebugger } from './components/MobileDebugger';
 
 // Client Node Protection (Standard Users)
 const ClientLayout = () => {
-  const { user, profile, loading, authError } = useAuth();
+  const { user, profile, loading, authError, isProfileCreating } = useAuth();
 
   if (loading) return <div className="min-h-screen bg-[#050505] flex items-center justify-center font-black tracking-widest text-white/10">AUTHENTICATING_...</div>;
   
+  // New State: Trigger is still running
+  if (isProfileCreating) {
+    return (
+      <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-12 h-12 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mb-6"></div>
+        <h2 className="text-xl font-bold mb-2 text-white">Generating your secure dashboard...</h2>
+        <p className="text-white/40 mb-8 max-w-md">We are provisioning your encrypted profile on the ledger. This usually takes a few seconds.</p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="px-6 py-2 bg-white text-black font-bold rounded-lg hover:bg-emerald-400 transition-colors"
+        >
+          Check Status
+        </button>
+      </div>
+    );
+  }
+
   if (authError) {
     return (
       <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center p-6 text-center">

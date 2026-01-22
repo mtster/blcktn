@@ -23,11 +23,14 @@ export const MasterAdminCabinet: React.FC = () => {
     
     try {
       // Fetch all profiles EXCEPT the Master Admin ID to avoid cluttering the list
+      // Using .not() filter as requested
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .neq('id', '50529017-99f7-4797-9b27-3f363596dc2e')
+        .not('id', 'eq', '50529017-99f7-4797-9b27-3f363596dc2e')
         .order('created_at', { ascending: false });
+
+      console.log("[ADMIN] Profiles count fetched: " + (data?.length || 0));
 
       if (error) {
         console.error("[MASTER] Fetch failed:", error.message);

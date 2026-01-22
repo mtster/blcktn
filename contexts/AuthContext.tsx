@@ -9,6 +9,7 @@ interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
+  isProfileCreating: boolean;
   isAdmin: boolean;
   authError: string | null;
   signOut: () => Promise<void>;
@@ -21,6 +22,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isProfileCreating, setIsProfileCreating] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   
   // Dynamic Admin Check:
@@ -62,17 +64,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchProfile = async (userId: string) => {
     setAuthError(null); 
+    setIsProfileCreating(false);
     
     try {
+      // Use maybeSingle() instead of single() to handle cases where the trigger hasn't finished yet
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
+
+      console.log("[AUTH] Profile result: " + JSON.stringify(data));
 
       if (error) {
         console.error(`[DATABASE] Profile fetch error: ${error.message}`);
         setAuthError(error.message);
+      } else if (!data) {
+        // No profile found, but no error. Likely the DB trigger is still running.
+        console.log("[AUTH] Profile not found yet, trigger likely processing...");
+        setIsProfileCreating(true);
+        setProfile(null);
       } else {
         console.log("[DATABASE] Profile fetched successfully.");
         setProfile(data as Profile);
@@ -89,6 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signOut();
     setProfile(null);
     setAuthError(null);
+    setIsProfileCreating(false);
   };
 
   return (
@@ -97,6 +109,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       user, 
       profile, 
       loading, 
+      isProfileCreating,
       isAdmin, 
       authError,
       signOut
