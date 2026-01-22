@@ -43,17 +43,14 @@ export const Navbar: React.FC = () => {
           {!loading && user ? (
             <>
               <div className="flex flex-col items-end mr-2">
-                {(profile?.is_admin || isMasterUser) ? (
-                  <>
-                    <span className="text-[10px] font-black text-red-400 uppercase tracking-widest">BLACKTON SYSTEM ADMIN</span>
-                    <span className="text-[8px] text-white/20 font-mono">ROOT_LEVEL_ACCESS</span>
-                  </>
-                ) : (
+                {/* Standard Client Label */}
+                {(!profile?.is_admin && !isMasterUser) && (
                   <>
                     <span className="text-[10px] font-bold text-white/30 uppercase tracking-tighter">{profile?.company_name}</span>
                     <span className="text-[8px] bg-emerald-500/10 text-emerald-400 px-1 rounded font-bold uppercase">Authorized Client</span>
                   </>
                 )}
+                {/* Admin labels removed as requested */}
               </div>
               <button 
                 onClick={() => { signOut(); navigate('/'); }}

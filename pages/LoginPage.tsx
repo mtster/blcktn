@@ -21,16 +21,22 @@ export const LoginPage: React.FC = () => {
 
     try {
       if (isSignUp) {
+        const metadata = { company_name: companyName };
+        console.log("SIGNUP ATTEMPT: Sending metadata -> " + JSON.stringify(metadata));
+
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: {
-              company_name: companyName
-            }
+            data: metadata
           }
         });
-        if (error) throw error;
+        
+        if (error) {
+          console.error("SIGNUP FAILURE:", error);
+          throw error;
+        }
+        
         alert('Check your email for the confirmation link!');
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({

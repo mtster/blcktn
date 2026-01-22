@@ -22,9 +22,11 @@ export const MasterAdminCabinet: React.FC = () => {
     setDbError(false);
     
     try {
+      // Fetch all profiles EXCEPT the Master Admin ID to avoid cluttering the list
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
+        .neq('id', '50529017-99f7-4797-9b27-3f363596dc2e')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -56,7 +58,7 @@ export const MasterAdminCabinet: React.FC = () => {
       <div className="max-w-7xl mx-auto px-6">
         <header className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
           <div>
-            <h1 className="text-4xl font-bold tracking-tight text-white mb-2">Admin Panel</h1>
+            <h1 className="text-4xl font-bold tracking-tight text-white mb-2">Admin Cabinet</h1>
           </div>
         </header>
 
