@@ -2,19 +2,19 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
 
 export const MobileDebugger: React.FC = () => {
   const [logs, setLogs] = useState<string[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
-  const { forceAdminMode, user } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (user) {
-      console.log("AUTH METADATA (RAW): " + JSON.stringify(user.user_metadata || {}));
-      console.log("AUTH ID: " + user.id);
+      // Log critical auth state for verification, but cleanly
+      if (user.user_metadata?.is_admin) {
+        console.log("[SYSTEM] Admin Privileges Verified via Metadata.");
+      }
     }
   }, [user]);
 
@@ -71,14 +71,8 @@ export const MobileDebugger: React.FC = () => {
     setTimeout(() => setShowToast(false), 2000);
   };
 
-  const handleForceAdmin = () => {
-    console.log("DEBUGGER: Force Admin engaged. Redirecting to Master Control...");
-    forceAdminMode();
-    navigate('/prio56');
-  };
-
   const handleWipeSession = () => {
-    console.log("DEBUGGER: Wiping Session Cache...");
+    console.log("[SYSTEM] Wiping Session Cache...");
     localStorage.clear();
     setLogs([]);
     window.location.reload();
@@ -105,14 +99,7 @@ export const MobileDebugger: React.FC = () => {
              <span className="text-white/60 font-bold uppercase tracking-widest">System Console</span>
           </div>
           <div className="flex items-center gap-2">
-             {/* FORCE ADMIN BUTTON */}
-             <button 
-                onClick={handleForceAdmin}
-                className="px-2 py-1 bg-red-500/20 text-red-400 border border-red-500/50 rounded hover:bg-red-500 hover:text-black font-bold uppercase tracking-widest transition-colors mr-2 animate-pulse"
-             >
-                FORCE ADMIN
-             </button>
-
+             
              <button 
                 onClick={handleWipeSession}
                 className="px-2 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded hover:bg-amber-500 hover:text-black font-bold uppercase tracking-widest transition-colors mr-2"

@@ -21,7 +21,8 @@ export const MasterAdminCabinet: React.FC = () => {
   const fetchUsers = async () => {
     setLoading(true);
     setDbError(false);
-    console.log("MASTER_ADMIN: Starting user fetch...");
+    console.log("[MASTER] Fetching all entity profiles...");
+    
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -29,10 +30,10 @@ export const MasterAdminCabinet: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error("MASTER_ADMIN: Fetch failed with error:", error);
+        console.error("[MASTER] Fetch failed:", error.message);
         setDbError(true);
       } else {
-        console.log("MASTER_ADMIN: Fetch successful. Records found:", data?.length);
+        console.log(`[MASTER] Successfully loaded ${data?.length} profiles.`);
         const profiles = data || [];
         setUsers(profiles);
         setStats({
@@ -42,21 +43,11 @@ export const MasterAdminCabinet: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('Master Control Error:', error);
+      console.error('[MASTER] Unexpected error:', error);
       setDbError(true);
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleForceLoadCache = () => {
-    // This is a manual override to clear the error state and "pretend" we loaded.
-    // In a real scenario, this might try a different endpoint or use local storage.
-    // Here we just unblock the UI.
-    console.log("MASTER_ADMIN: Force loading cache/clearing error...");
-    setDbError(false);
-    setUsers([]); // Clear users so we don't show stale/wrong data
-    setLoading(false);
   };
 
   const updateStatus = async (id: string, newStatus: 'active' | 'suspended') => {
@@ -91,7 +82,7 @@ export const MasterAdminCabinet: React.FC = () => {
               MASTER CONTROL LAYER
             </div>
             <h1 className="text-5xl font-black tracking-tighter mb-2">BLACKTON COMMAND</h1>
-            <p className="text-white/40 max-w-2xl">Global enterprise state management and compliance override center.</p>
+            <p className="text-white/40 max-w-2xl">Global enterprise state management.</p>
           </div>
           
           <button 
@@ -123,7 +114,7 @@ export const MasterAdminCabinet: React.FC = () => {
               onClick={fetchUsers}
               className="px-4 py-2 text-xs font-bold text-white/40 hover:text-white transition-colors"
             >
-              FORCE REFRESH
+              REFRESH
             </button>
           </div>
           
@@ -146,13 +137,13 @@ export const MasterAdminCabinet: React.FC = () => {
                      <td colSpan={5} className="px-8 py-20 text-center">
                         <div className="flex flex-col items-center">
                            <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center mb-4 border border-red-500/20 text-xl">⚠️</div>
-                           <p className="text-white/60 font-bold mb-2">Database recursion detected.</p>
-                           <p className="text-white/30 text-xs font-mono mb-4">The Supabase Policy is looping indefinitely.</p>
+                           <p className="text-white/60 font-bold mb-2">Data Link Interrupted</p>
+                           <p className="text-white/30 text-xs font-mono mb-4">Unable to retrieve enterprise registry.</p>
                            <button 
-                             onClick={handleForceLoadCache}
-                             className="px-6 py-2 bg-white text-black font-bold rounded-lg hover:bg-emerald-400 transition-colors shadow-lg shadow-emerald-500/20"
+                             onClick={fetchUsers}
+                             className="px-6 py-2 bg-white text-black font-bold rounded-lg hover:bg-emerald-400 transition-colors"
                            >
-                             Force Load from Cache
+                             Retry Connection
                            </button>
                         </div>
                      </td>
