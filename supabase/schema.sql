@@ -22,15 +22,29 @@ CREATE TABLE IF NOT EXISTS audits (
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audits ENABLE ROW LEVEL SECURITY;
 
+-- CRITICAL FIX: Helper function to prevent infinite recursion in RLS policies
+-- This function runs with the privileges of the creator (SECURITY DEFINER)
+-- effectively bypassing RLS for the check itself.
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1
+    FROM profiles
+    WHERE id = auth.uid() AND is_admin = TRUE
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Profiles Policies
 DROP POLICY IF EXISTS "Users can view their own profile" ON profiles;
 CREATE POLICY "Users can view their own profile" ON profiles FOR SELECT USING (auth.uid() = id);
 
 DROP POLICY IF EXISTS "Admins can view all profiles" ON profiles;
-CREATE POLICY "Admins can view all profiles" ON profiles FOR SELECT USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = TRUE));
+CREATE POLICY "Admins can view all profiles" ON profiles FOR SELECT USING (public.is_admin());
 
 DROP POLICY IF EXISTS "Admins can update profiles" ON profiles;
-CREATE POLICY "Admins can update profiles" ON profiles FOR UPDATE USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = TRUE));
+CREATE POLICY "Admins can update profiles" ON profiles FOR UPDATE USING (public.is_admin());
 
 -- Audits Policies
 DROP POLICY IF EXISTS "Users can view their own audits" ON audits;
@@ -38,7 +52,6 @@ CREATE POLICY "Users can view their own audits" ON audits FOR SELECT USING (auth
 
 DROP POLICY IF EXISTS "Users can insert their own audits" ON audits;
 CREATE POLICY "Users can insert their own audits" ON audits FOR INSERT WITH CHECK (auth.uid() = user_id);
-
 
 -- Trigger for automatic profile creation
 CREATE OR REPLACE FUNCTION public.handle_new_user()

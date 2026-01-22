@@ -15,14 +15,19 @@ export const MasterAdminCabinet: React.FC = () => {
 
   const fetchUsers = async () => {
     setLoading(true);
+    console.log("MASTER_ADMIN: Starting user fetch...");
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("MASTER_ADMIN: Fetch failed with error:", error);
+        throw error;
+      }
       
+      console.log("MASTER_ADMIN: Fetch successful. Records found:", data?.length);
       const profiles = data || [];
       setUsers(profiles);
       setStats({
@@ -118,49 +123,47 @@ export const MasterAdminCabinet: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <div className={`w-1.5 h-1.5 rounded-full ${
                             u.status === 'active' ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 
-                            u.status === 'pending' ? 'bg-amber-400' : 'bg-red-400'
+                            u.status === 'suspended' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 
+                            'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]'
                           }`}></div>
-                          <span className={`text-xs font-bold uppercase tracking-tighter ${
-                            u.status === 'active' ? 'text-emerald-400' : 
-                            u.status === 'pending' ? 'text-amber-400' : 'text-red-400'
+                          <span className={`text-xs font-bold uppercase ${
+                             u.status === 'active' ? 'text-emerald-400' : 
+                             u.status === 'suspended' ? 'text-red-400' : 
+                             'text-amber-400'
                           }`}>{u.status}</span>
                         </div>
                       </td>
                       <td className="px-8 py-6">
-                        <span className={`text-[10px] font-black px-2 py-1 rounded-md border ${
-                          u.is_admin ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-white/5 border-white/10 text-white/40'
+                        <span className={`text-[10px] font-bold px-2 py-1 rounded border ${
+                          u.is_admin 
+                          ? 'border-red-500/30 text-red-400 bg-red-500/10' 
+                          : 'border-white/10 text-white/40 bg-white/5'
                         }`}>
-                          {u.is_admin ? 'ROOT_USER' : 'CLIENT_NODE'}
+                          {u.is_admin ? 'ROOT_ADMIN' : 'STANDARD_CLIENT'}
                         </span>
                       </td>
-                      <td className="px-8 py-6 text-sm font-medium text-white/40">
+                      <td className="px-8 py-6 text-sm text-white/40">
                         {new Date(u.created_at).toLocaleDateString()}
                       </td>
-                      <td className="px-8 py-6 text-right space-x-3">
-                        {u.status === 'pending' && (
-                          <button 
-                            onClick={() => updateStatus(u.id, 'active')}
-                            className="px-4 py-2 bg-emerald-500 text-black text-[10px] font-black rounded-lg hover:bg-emerald-400 transition-all uppercase"
-                          >
-                            Authorize
-                          </button>
-                        )}
-                        {u.status === 'active' && !u.is_admin && (
-                          <button 
-                            onClick={() => updateStatus(u.id, 'suspended')}
-                            className="px-4 py-2 border border-red-500/20 text-red-400 text-[10px] font-black rounded-lg hover:bg-red-500 hover:text-white transition-all uppercase"
-                          >
-                            Revoke
-                          </button>
-                        )}
-                        {u.status === 'suspended' && (
-                          <button 
-                            onClick={() => updateStatus(u.id, 'active')}
-                            className="px-4 py-2 border border-white/10 text-white/40 text-[10px] font-black rounded-lg hover:bg-white/10 hover:text-white transition-all uppercase"
-                          >
-                            Restore
-                          </button>
-                        )}
+                      <td className="px-8 py-6 text-right">
+                        <div className="flex justify-end gap-2">
+                          {u.status !== 'active' && (
+                            <button 
+                              onClick={() => updateStatus(u.id, 'active')}
+                              className="px-3 py-1.5 bg-emerald-500 text-black text-[10px] font-bold rounded hover:bg-emerald-400 transition-colors"
+                            >
+                              APPROVE
+                            </button>
+                          )}
+                          {u.status !== 'suspended' && (
+                            <button 
+                              onClick={() => updateStatus(u.id, 'suspended')}
+                              className="px-3 py-1.5 bg-white/5 hover:bg-red-500/10 text-white/40 hover:text-red-400 border border-white/10 hover:border-red-500/30 text-[10px] font-bold rounded transition-all"
+                            >
+                              SUSPEND
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))

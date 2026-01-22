@@ -49,6 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const fetchProfile = async (userId: string) => {
+    console.log(`DATABASE: Fetching profile for UID: ${userId}`);
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -57,12 +58,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
 
       if (error) {
-        console.error('Error fetching profile:', error);
+        console.error(`DATABASE ERROR: Code ${error.code} - ${error.message}`);
+        if (error.code === '42P17') {
+           console.error("CRITICAL: Infinite recursion detected in RLS policy. Please update supabase/schema.sql with the SECURITY DEFINER fix.");
+        }
       } else {
+        console.log("DATABASE: Profile loaded successfully:", data);
         setProfile(data as Profile);
       }
     } catch (err) {
-      console.error('Profile fetch error:', err);
+      console.error('Profile fetch unexpected error:', err);
     } finally {
       setLoading(false);
     }

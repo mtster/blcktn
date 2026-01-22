@@ -48,9 +48,9 @@ const MasterAdminLayout = () => {
     }
   }, [loading, profile, user]);
 
-  // If loading or admin status is undefined, show loading screen (Black Screen / Spinner)
-  // We do NOT redirect here.
-  if (loading) {
+  // If loading OR is_admin is undefined (data hasn't arrived yet), show loading.
+  // We do NOT redirect here to prevent race conditions.
+  if (loading || (user && profile?.is_admin === undefined)) {
      return (
         <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center">
            <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -59,21 +59,19 @@ const MasterAdminLayout = () => {
      );
   }
   
-  // If not logged in, silent fail to home
+  // If not logged in after loading finishes, silent fail to home
   if (!user) {
     console.log("DEBUG: Access Denied - No User found.");
     return <Navigate to="/" replace />;
   }
 
   // ONLY redirect if is_admin is explicitly FALSE.
-  // If it is undefined, we allow it to proceed (assuming latency or data issue we don't want to crash on)
   if (profile?.is_admin === false) {
     console.log("DEBUG: Access Denied - User is explicitly NOT an admin.");
     return <Navigate to="/" replace />;
   }
 
-  // If we are here, is_admin is either true or undefined (but loading is false).
-  // This allows the route to render even if is_admin is lagging slightly or missing from the specific select.
+  // If we are here, is_admin is TRUE.
   return <Outlet />;
 };
 
