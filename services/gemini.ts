@@ -1,39 +1,28 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 
-// Resilience Check: Ensure API Key exists before crashing
-const apiKey = process.env.API_KEY;
-
-if (!apiKey) {
-  console.warn("⚠️ API_KEY is missing. Gemini features will fail.");
-}
-
-// Initialize only if key is present to avoid immediate crash, or handle gracefully
-const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+// Removed Vite triple-slash reference to fix "Cannot find type definition file" error.
 
 export const processUtilityBill = async (base64Image: string, mimeType: string) => {
-  if (!ai) {
-    throw new Error("Gemini API Key is missing. Please configure your environment.");
-  }
+  // Initialize GoogleGenAI with process.env.API_KEY exclusively as per requirements.
+  // Creating instance inside the function ensures the latest key is used.
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: [
-        {
-          parts: [
-            {
-              inlineData: {
-                data: base64Image,
-                mimeType: mimeType,
-              },
+      contents: {
+        parts: [
+          {
+            inlineData: {
+              data: base64Image,
+              mimeType: mimeType,
             },
-            {
-              text: "Extract energy consumption data from this utility bill. Identify: 1. Total kWh/Usage 2. Period Start/End 3. Provider Name 4. Estimated Carbon Footprint (if possible). Output as JSON.",
-            },
-          ],
-        },
-      ],
+          },
+          {
+            text: "Extract energy consumption data from this utility bill. Identify: 1. Total kWh/Usage 2. Period Start/End 3. Provider Name 4. Estimated Carbon Footprint (if possible). Output as JSON.",
+          },
+        ],
+      },
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -51,11 +40,13 @@ export const processUtilityBill = async (base64Image: string, mimeType: string) 
       }
     });
 
-    if (!response.text) {
+    // Directly access the text property of the GenerateContentResponse object.
+    const text = response.text;
+    if (!text) {
       throw new Error("No text response from Gemini.");
     }
 
-    return JSON.parse(response.text);
+    return JSON.parse(text.trim());
   } catch (error) {
     console.error("Gemini Processing Error:", error);
     throw error;

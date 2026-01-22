@@ -1,10 +1,12 @@
 
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 export const Navbar: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, profile, signOut, loading } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -16,17 +18,37 @@ export const Navbar: React.FC = () => {
           <span className="text-xl font-bold tracking-tighter uppercase">Blackton</span>
         </Link>
 
-        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-white/60">
-          <Link to="/" className={`hover:text-white transition-colors ${isActive('/') ? 'text-white' : ''}`}>Platform</Link>
-          <Link to="/dashboard" className={`hover:text-white transition-colors ${isActive('/dashboard') ? 'text-white' : ''}`}>Dashboard</Link>
-          <Link to="/admin" className={`hover:text-white transition-colors ${isActive('/admin') ? 'text-white' : ''}`}>Administration</Link>
-        </div>
+        {!loading && user && (
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-white/60">
+            <Link to="/" className={`hover:text-white transition-colors ${isActive('/') ? 'text-white' : ''}`}>Platform</Link>
+            {profile?.status === 'active' && (
+              <Link to="/dashboard" className={`hover:text-white transition-colors ${isActive('/dashboard') ? 'text-white' : ''}`}>Dashboard</Link>
+            )}
+            {profile?.is_admin && (
+              <Link to="/admin" className={`hover:text-white transition-colors ${isActive('/admin') ? 'text-white' : ''}`}>Administration</Link>
+            )}
+          </div>
+        )}
 
         <div className="flex items-center gap-4">
-          <button className="text-sm font-medium hover:text-white transition-colors text-white/60">Login</button>
-          <button className="px-5 py-2.5 bg-white text-black text-sm font-semibold rounded-full hover:bg-emerald-400 transition-all duration-300">
-            Get Started
-          </button>
+          {!loading && user ? (
+            <>
+              <span className="text-xs font-bold text-white/30 hidden sm:block">{profile?.company_name}</span>
+              <button 
+                onClick={() => { signOut(); navigate('/'); }}
+                className="text-sm font-medium hover:text-white transition-colors text-white/60"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="text-sm font-medium hover:text-white transition-colors text-white/60">Login</Link>
+              <Link to="/login" className="px-5 py-2.5 bg-white text-black text-sm font-semibold rounded-full hover:bg-emerald-400 transition-all duration-300">
+                Get Started
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>

@@ -1,0 +1,2 @@
+This file is used to trigger a fresh deployment. You can delete this file after the build succeeds.
+Timestamp: ${new Date().toISOString()}
